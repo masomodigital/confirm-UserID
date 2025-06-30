@@ -80,41 +80,44 @@
   <p id="errorMsg" class="error"></p>
 
   <script>
-    function searchUser() {
-      const nationalId = document.getElementById("nationalId").value.trim();
-      const output = document.getElementById("output");
-      const errorMsg = document.getElementById("errorMsg");
+function searchUser() {
+  const nationalId = document.getElementById("nationalId").value.trim();
+  const errorMsg = document.getElementById("errorMsg");
+  const output = document.getElementById("output");
 
-      output.style.display = "none";
-      errorMsg.textContent = "";
+  if (!nationalId) {
+    errorMsg.textContent = "Please enter a National ID or User ID.";
+    output.innerHTML = "";
+    output.style.display = "none";
+    return;
+  }
 
-      if (!nationalId) {
-        errorMsg.textContent = "Please enter your National ID.";
-        return;
+  errorMsg.innerHTML = "<span style='color: green; font-weight: bold;'>Wait...</span>";
+  output.innerHTML = "";
+  output.style.display = "none";
+
+  fetch(`https://script.google.com/macros/s/AKfycbzwPt6CAR6QGnTjT2-GE7ODNfNo_tDIPbI-Gtfn0qNYhYsJOba0S4_PXxwmZZt6hdL2/exec?nationalId=${encodeURIComponent(nationalId)}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const { name, nationalId, phone } = data.user;
+        output.innerHTML = `
+          <strong>Name:</strong> ${name} <br><br>
+          <strong>National ID / User ID:</strong> 
+          <span id="copyId">${nationalId}</span>
+          <button class="copy-button" onclick="copyToClipboard('copyId')">Copy</button><br><br>
+          <strong>Phone Number:</strong> 0${phone}
+        `;
+        output.style.display = "block";
+        errorMsg.textContent = "";
+      } else {
+        errorMsg.textContent = data.message || "User not found.";
       }
-
-      fetch(`https://script.google.com/macros/s/AKfycbzwPt6CAR6QGnTjT2-GE7ODNfNo_tDIPbI-Gtfn0qNYhYsJOba0S4_PXxwmZZt6hdL2/exec?nationalId=${encodeURIComponent(nationalId)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            const { name, nationalId, phone } = data.user;
-            output.innerHTML = `
-              <strong>Name:</strong> ${name} <br><br>
-              <strong>National ID / User ID:</strong> 
-              <span id="copyId">${nationalId}</span>
-              <button class="copy-button" onclick="copyToClipboard('copyId')">Copy</button><br><br>
-              <strong>Phone Number:</strong> 0${phone}
-            `;
-            output.style.display = "block";
-          } else {
-            errorMsg.textContent = data.message || "User not found.";
-          }
-        })
-        .catch(err => {
-          errorMsg.textContent = "Error fetching data. Please try again.";
-        });
-    }
-
+    })
+    .catch(() => {
+      errorMsg.textContent = "Error fetching data. Please try again.";
+    });
+}
     function copyToClipboard(idElement) {
       const text = document.getElementById(idElement).textContent;
       navigator.clipboard.writeText(text).then(() => {

@@ -1,1 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Confirm User ID</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom right, #e0f7fa, #ffffff);
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      text-align: center;
+    }
+    h2 {
+      color: #0077cc;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 20px;
+    }
+    input {
+      padding: 10px;
+      width: 80%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    .result-box {
+      margin-top: 25px;
+      padding: 15px;
+      background-color: #f4f4f4;
+      border-radius: 8px;
+      text-align: left;
+    }
+    .copy-button {
+      margin-left: 10px;
+      padding: 6px 10px;
+      font-size: 12px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .copy-button:hover {
+      background-color: #218838;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Confirm Your User ID</h2>
 
+  <label for="nationalId">Enter National ID / User ID:</label>
+  <input type="text" id="nationalId" placeholder="e.g. 12345678" autocomplete="off" />
+
+  <button onclick="searchUser()">Search to Confirm</button>
+
+  <div id="output" class="result-box" style="display:none;"></div>
+  <p id="errorMsg" class="error"></p>
+
+  <script>
+    function searchUser() {
+      const nationalId = document.getElementById("nationalId").value.trim();
+      const output = document.getElementById("output");
+      const errorMsg = document.getElementById("errorMsg");
+
+      output.style.display = "none";
+      errorMsg.textContent = "";
+
+      if (!nationalId) {
+        errorMsg.textContent = "Please enter your National ID.";
+        return;
+      }
+
+      fetch(`https://script.google.com/macros/s/AKfycbzwPt6CAR6QGnTjT2-GE7ODNfNo_tDIPbI-Gtfn0qNYhYsJOba0S4_PXxwmZZt6hdL2/exec?nationalId=${encodeURIComponent(nationalId)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const { name, nationalId, phone } = data.user;
+            output.innerHTML = `
+              <strong>Name:</strong> ${name} <br><br>
+              <strong>National ID / User ID:</strong> 
+              <span id="copyId">${nationalId}</span>
+              <button class="copy-button" onclick="copyToClipboard('copyId')">Copy</button><br><br>
+              <strong>Phone Number:</strong> ${phone}
+            `;
+            output.style.display = "block";
+          } else {
+            errorMsg.textContent = data.message || "User not found.";
+          }
+        })
+        .catch(err => {
+          errorMsg.textContent = "Error fetching data. Please try again.";
+        });
+    }
+
+    function copyToClipboard(idElement) {
+      const text = document.getElementById(idElement).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("User ID copied to clipboard!");
+      });
+    }
+  </script>
+</body>
+</html>
